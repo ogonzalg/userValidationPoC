@@ -1,6 +1,7 @@
 package com.everis.blockchain.util;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyFactory;
@@ -12,10 +13,12 @@ import java.util.List;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.hyperledger.fabric.sdk.exception.CryptoException;
+import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
 
 public class CryptoFilesUtils {
-	public static PrivateKey readPrivateKeyPemFile(Path pkPath) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException{
+	public static PrivateKey readPrivateKeyPemFile(Path pkPath) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, IllegalAccessException, InstantiationException, ClassNotFoundException, CryptoException, InvalidArgumentException, NoSuchMethodException, InvocationTargetException{
 		CryptoSuite.Factory.getCryptoSuite();
 
 		PrivateKey key = null;
