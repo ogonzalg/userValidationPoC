@@ -291,6 +291,8 @@ public class ClientValidationTest {
 		userContext.setEnrollment(userEnrollment);
 
 		System.out.println("User " + name + " registered and enrolled");
+		System.out.println("User cert:");
+		System.out.println(userEnrollment.getCert());
 
 		return userContext;
 	}
