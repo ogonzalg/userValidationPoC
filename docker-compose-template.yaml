@@ -1,0 +1,92 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+volumes:
+  orderer.everis.com:
+  peer0.pagos.everis.com:
+  peer1.pagos.everis.com:
+  peer0.cobros.everis.com:
+  peer1.cobros.everis.com:
+
+networks:
+  net:
+services:
+  pagos-ca:
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-pagos
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.pagos.everis.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/PAGOS_CA_PRIVATE_KEY
+    ports:
+      - "7054:7054"
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.pagos.everis.com-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/PAGOS_CA_PRIVATE_KEY -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/peerOrganizations/pagos.everis.com/ca/:/etc/hyperledger/fabric-ca-server-config
+      - ./pagos-ca-server-config.yaml:/etc/hyperledger/fabric-ca-server/fabric-ca-server-config.yaml
+    container_name: ca_pagos
+    networks:
+      - net
+
+  cobros-ca:
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-cobros
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.cobros.everis.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/COBROS_CA_PRIVATE_KEY
+    ports:
+      - "8054:7054"
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.cobros.everis.com-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/COBROS_CA_PRIVATE_KEY -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/peerOrganizations/cobros.everis.com/ca/:/etc/hyperledger/fabric-ca-server-config
+      - ./cobros-ca-server-config.yaml:/etc/hyperledger/fabric-ca-server/fabric-ca-server-config.yaml
+    container_name: ca_cobros
+    networks:
+      - net
+
+  orderer.everis.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer.everis.com
+    container_name: orderer.everis.com
+    networks:
+      - net
+
+  peer0.pagos.everis.com:
+    container_name: peer0.pagos.everis.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.pagos.everis.com
+    networks:
+      - net
+
+  peer1.pagos.everis.com:
+    container_name: peer1.pagos.everis.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.pagos.everis.com
+    networks:
+      - net
+
+  peer0.cobros.everis.com:
+    container_name: peer0.cobros.everis.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.cobros.everis.com
+    networks:
+      - net
+
+  peer1.cobros.everis.com:
+    container_name: peer1.cobros.everis.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.cobros.everis.com
+    networks:
+      - net
