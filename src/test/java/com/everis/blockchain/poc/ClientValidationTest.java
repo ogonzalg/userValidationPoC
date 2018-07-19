@@ -14,10 +14,16 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import com.everis.blockchain.users.EnrollmentImpl;
+import com.everis.blockchain.users.UserImpl;
+import com.everis.blockchain.util.CryptoFilesUtils;
 
 import org.hyperledger.fabric.sdk.BlockEvent.TransactionEvent;
 import org.hyperledger.fabric.sdk.ChaincodeID;
@@ -37,18 +43,17 @@ import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.ProposalException;
 import org.hyperledger.fabric.sdk.exception.TransactionException;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
+import org.hyperledger.fabric_ca.sdk.HFCAClient;
+import org.hyperledger.fabric_ca.sdk.RegistrationRequest;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.everis.blockchain.users.EnrollmentImpl;
-import com.everis.blockchain.users.UserImpl;
-import com.everis.blockchain.util.CryptoFilesUtils;
 
 public class ClientValidationTest {
 	private static User org1Admin;
 	private static User org2Admin;
 	
 	private static final HFClient hfClient = HFClient.createNewInstance();
+	private static HFCAClient hfcaClient;
 	private static final Properties conf = new Properties();
 
 	
@@ -61,10 +66,15 @@ public class ClientValidationTest {
 		org1Admin = getAdmin(conf, "org1");
 		org2Admin = getAdmin(conf, "org2");
 		
+		Properties props = new Properties();
+		props.setProperty("allowAllHostNames", "true");
+		props.setProperty("pemFile", conf.getProperty("org1.ca.cert"));
+		hfcaClient = HFCAClient.createNewInstance( conf.getProperty("org1.ca.url"), props);
+		hfcaClient.setCryptoSuite(CryptoSuite.Factory.getCryptoSuite());
 	}
 
 	@Test
-	public void allTest() throws InvalidArgumentException, URISyntaxException, IOException, TransactionException, ProposalException {
+	public void allTest() throws Exception {
 
 		hfClient.setUserContext(org1Admin);
 		createChannel();
@@ -78,7 +88,11 @@ public class ClientValidationTest {
 
 		deployChaincode();
 		
-		instantiateChainCode("init", new String[] { "" });
+		instantiateChainCode("init");
+
+		registerSimpleUser();
+		registerPowerUser();
+
 	}
 	
 	private void deployChaincode() throws InvalidArgumentException, URISyntaxException, TransactionException, ProposalException, IOException {
@@ -104,7 +118,7 @@ public class ClientValidationTest {
 		
 	}
 
-	private void instantiateChainCode(String functionName, String[] functionArgs) throws InvalidArgumentException, ProposalException, URISyntaxException, TransactionException {
+	private void instantiateChainCode(String functionName) throws InvalidArgumentException, ProposalException, URISyntaxException, TransactionException {
 		hfClient.setUserContext(org1Admin);
 
 		Channel channel = hfClient.newChannel(conf.getProperty("channel.name"));
@@ -124,7 +138,7 @@ public class ClientValidationTest {
 		instantiateProposalRequest.setChaincodeLanguage(Type.GO_LANG);
 
 		instantiateProposalRequest.setFcn(functionName);
-		instantiateProposalRequest.setArgs(functionArgs);
+		instantiateProposalRequest.setArgs(new String[] { "" });
 		Map<String, byte[]> tm = new HashMap<>();
 		tm.put("HyperLedgerFabric", "InstantiateProposalRequest:JavaSDK".getBytes(UTF_8));
 		tm.put("method", "InstantiateProposalRequest".getBytes(UTF_8));
@@ -224,6 +238,61 @@ public class ClientValidationTest {
 		request.setChaincodeVersion(conf.getProperty("chaincode.version"));
 		Collection<ProposalResponse> responses = hfClient.sendInstallProposal(request, peers);
 		return responses;
+	}
+
+	private User registerSimpleUser()  throws Exception {
+		
+		Enrollment adminEnrollment = hfcaClient.enroll(conf.getProperty("org1.admin.name"), conf.getProperty("org1.admin.password"));
+		UserImpl adminUserContext = new UserImpl();
+		adminUserContext.setName(conf.getProperty("org1.admin.name"));
+		adminUserContext.setAffiliation(conf.getProperty("org1.name"));
+		adminUserContext.setMspId(conf.getProperty("org1.msp"));
+		adminUserContext.setEnrollment(adminEnrollment);
+
+		// Register and Enroll user to Org1MSP
+		UserImpl userContext = new UserImpl();
+		String name = "user"+System.currentTimeMillis();
+		userContext.setName(name);
+		userContext.setAffiliation(conf.getProperty("org1.name"));
+		userContext.setMspId(conf.getProperty("org1.msp"));
+
+		RegistrationRequest request = new RegistrationRequest(userContext.getName(), userContext.getAffiliation());
+		String password = hfcaClient.register(request, adminUserContext);
+		Enrollment userEnrollment = hfcaClient.enroll(name, password);
+		userContext.setEnrollment(userEnrollment);
+
+		System.out.println("User " + name + " registered and enrolled");
+
+		return userContext;
+	}
+
+	private User registerPowerUser()  throws Exception {
+		
+		Enrollment adminEnrollment = hfcaClient.enroll(conf.getProperty("org1.admin.name"), conf.getProperty("org1.admin.password"));
+		UserImpl adminUserContext = new UserImpl();
+		adminUserContext.setName(conf.getProperty("org1.admin.name"));
+		adminUserContext.setAffiliation(conf.getProperty("org1.name"));
+		adminUserContext.setMspId(conf.getProperty("org1.msp"));
+		adminUserContext.setEnrollment(adminEnrollment);
+
+		// Register and Enroll user to Org1MSP
+		UserImpl userContext = new UserImpl();
+		String name = "user"+System.currentTimeMillis();
+		userContext.setName(name);
+		userContext.setAffiliation(conf.getProperty("org1.name"));
+		userContext.setMspId(conf.getProperty("org1.msp"));
+		Set<String> roles = new HashSet<String>();
+		roles.add("power");
+		userContext.setRoles(roles);
+
+		RegistrationRequest request = new RegistrationRequest(userContext.getName(), userContext.getAffiliation());
+		String password = hfcaClient.register(request, adminUserContext);
+		Enrollment userEnrollment = hfcaClient.enroll(name, password);
+		userContext.setEnrollment(userEnrollment);
+
+		System.out.println("User " + name + " registered and enrolled");
+
+		return userContext;
 	}
 
 }
