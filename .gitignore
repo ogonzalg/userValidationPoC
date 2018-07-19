@@ -2,3 +2,6 @@
 .project
 .settings/
 target/
+.vscode/
+src/test/resources/config/channel.tx
+src/test/resources/crypto-config/
