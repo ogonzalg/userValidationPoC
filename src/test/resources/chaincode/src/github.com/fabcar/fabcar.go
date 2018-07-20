@@ -72,11 +72,15 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 	mspid, err = cid.GetMSPID(APIstub)
 	if err == nil {
 		fmt.Println("mspid is ", mspid)
+	} else {
+		fmt.Println("Error?")
 	}
 	
 	powered, found, err = cid.GetAttributeValue("powered")
 	if err == nil && found {
 		fmt.Println("powered is ", ppwered)
+	} else {
+		fmt.Println("Error?")
 	}
 	
 	// Retrieve the requested Smart Contract function and arguments
