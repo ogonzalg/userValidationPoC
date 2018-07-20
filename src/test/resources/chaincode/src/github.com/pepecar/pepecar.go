@@ -76,7 +76,7 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 		fmt.Println("Error?")
 	}
 	
-	powered, found, err = cid.GetAttributeValue("powered")
+	powered, found, err = cid.GetAttributeValue(APIstub,"powered")
 	if err == nil && found {
 		fmt.Println("powered is ", ppwered)
 	} else {
