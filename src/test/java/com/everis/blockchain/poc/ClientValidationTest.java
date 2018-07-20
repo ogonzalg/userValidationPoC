@@ -85,19 +85,19 @@ public class ClientValidationTest {
 	@Test
 	public void allTest() throws Exception {
 
-//		hfClient.setUserContext(org1Admin);
-//		createChannel();
-//		
-//		joinPeer("org1","peer0");
-//		joinPeer("org1","peer1");
-//		
-//		hfClient.setUserContext(org2Admin);
-//		joinPeer("org2","peer0");
-//		joinPeer("org2","peer1");
-//
-//		deployChaincode();
-//		
-//		instantiateChainCode("init");
+		hfClient.setUserContext(org1Admin);
+		createChannel();
+		
+		joinPeer("org1","peer0");
+		joinPeer("org1","peer1");
+		
+		hfClient.setUserContext(org2Admin);
+		joinPeer("org2","peer0");
+		joinPeer("org2","peer1");
+
+		deployChaincode();
+		
+		instantiateChainCode("init");
 
 		HFCAIdentity simple = registerSimpleUser();
 		HFCAIdentity powered = registerPowerUser();
