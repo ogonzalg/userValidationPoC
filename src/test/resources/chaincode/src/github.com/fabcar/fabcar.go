@@ -35,6 +35,7 @@ import (
 	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric/core/chaincode/lib/cid"
 	sc "github.com/hyperledger/fabric/protos/peer"
 )
 
@@ -63,7 +64,21 @@ func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
  * The calling application program has also specified the particular smart contract function to be called, with arguments
  */
 func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
-
+	var mspid string
+	var err error
+	var found bool
+	var powered string
+	
+	mspid, err = cid.GetMSPID(APIstub)
+	if err == nil {
+		fmt.Println("mspid is ", mspid)
+	}
+	
+	powered, found, err = cid.GetAttributeValue("powered")
+	if err == nil && found {
+		fmt.Println("powered is ", ppwered)
+	}
+	
 	// Retrieve the requested Smart Contract function and arguments
 	function, args := APIstub.GetFunctionAndParameters()
 	// Route to the appropriate handler function to interact with the ledger appropriately

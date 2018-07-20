@@ -25,6 +25,7 @@ import org.hyperledger.fabric.sdk.ChaincodeResponse.Status;
 import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric.sdk.ChannelConfiguration;
 import org.hyperledger.fabric.sdk.Enrollment;
+import org.hyperledger.fabric.sdk.EventHub;
 import org.hyperledger.fabric.sdk.HFClient;
 import org.hyperledger.fabric.sdk.InstallProposalRequest;
 import org.hyperledger.fabric.sdk.InstantiateProposalRequest;
@@ -84,19 +85,19 @@ public class ClientValidationTest {
 	@Test
 	public void allTest() throws Exception {
 
-		hfClient.setUserContext(org1Admin);
-		createChannel();
-		
-		joinPeer("org1","peer0");
-		joinPeer("org1","peer1");
-		
-		hfClient.setUserContext(org2Admin);
-		joinPeer("org2","peer0");
-		joinPeer("org2","peer1");
-
-		deployChaincode();
-		
-		instantiateChainCode("init");
+//		hfClient.setUserContext(org1Admin);
+//		createChannel();
+//		
+//		joinPeer("org1","peer0");
+//		joinPeer("org1","peer1");
+//		
+//		hfClient.setUserContext(org2Admin);
+//		joinPeer("org2","peer0");
+//		joinPeer("org2","peer1");
+//
+//		deployChaincode();
+//		
+//		instantiateChainCode("init");
 
 		HFCAIdentity simple = registerSimpleUser();
 		HFCAIdentity powered = registerPowerUser();
@@ -117,6 +118,7 @@ public class ClientValidationTest {
 		channel = hfClient.newChannel(conf.getProperty("channel.name"));
 		channel.addOrderer(getOrderer());
 		channel.addPeer(getPeer("org1", "peer0"));
+		channel.addEventHub(getEventHub("org1", "peer0"));
 		channel.initialize();
 		
 		QueryByChaincodeRequest request = hfClient.newQueryProposalRequest();
@@ -145,15 +147,13 @@ public class ClientValidationTest {
 		channel = hfClient.newChannel(conf.getProperty("channel.name"));
 		channel.addOrderer(getOrderer());
 		channel.addPeer(getPeer("org1", "peer0"));
+		channel.addEventHub(getEventHub("org1", "peer0"));
 		channel.initialize();
 		
 		TransactionProposalRequest request = hfClient.newTransactionProposalRequest();
 		ChaincodeID ccid = ChaincodeID.newBuilder().setName(conf.getProperty("chaincode.name")).build();
 		request.setChaincodeID(ccid);
 		request.setFcn("initLedger");
-		//String[] arguments = { "CAR2", "Volkswagen", "Touran", "White", "Oscar" };
-		String[] arguments = { "CAR2", "Volkswagen", "Touran", "White" };
-		request.setArgs(arguments);
 		request.setProposalWaitTime(1000);
 		
 		UserImpl userContext = new UserImpl();
@@ -161,7 +161,7 @@ public class ClientValidationTest {
 		userContext.setMspId(org1Admin.getMspId());
 		userContext.setEnrollment(hfcaClient.enroll(simple.getEnrollmentId(), simple.getSecret()));
 		userContext.setAffiliation(simple.getAffiliation());
-		request.setUserContext(org1Admin);
+		request.setUserContext(userContext);
 		
 		Map<String, byte[]> tm2 = new HashMap<>();
 		tm2.put("HyperLedgerFabric", "TransactionProposalRequest:JavaSDK".getBytes(UTF_8)); 																								
@@ -170,7 +170,8 @@ public class ClientValidationTest {
 		tm2.put("event", "!".getBytes(UTF_8)); 
 		request.setTransientMap(tm2);
 
-		Collection<ProposalResponse> responses = channel.sendTransactionProposal(request);
+		Collection<ProposalResponse> responses = channel.sendTransactionProposal(request, channel.getPeers());
+		channel.sendTransaction(responses,userContext);
 		for (ProposalResponse res: responses) {
 			Status status = res.getStatus();
 			System.out.println("Invoked createCar on "+ conf.getProperty("chaincode.name") + ". Status - " + status);
@@ -284,6 +285,20 @@ public class ClientValidationTest {
 			peerProps.setProperty("sslProvider", "openSSL");
 			peerProps.setProperty("negotiationType", "TLS");
 			return hfClient.newPeer(conf.getProperty(org + "." + peer +".name"), conf.getProperty(org + "." + peer +".url"), peerProps);
+		} else {
+			//TODO: Add non TLS peers
+			return null;
+		}
+	}
+
+	private EventHub getEventHub(String org, String peer) throws URISyntaxException, InvalidArgumentException{
+		if(conf.getProperty(org+"."+peer+"."+"tsl.cert")!=null){
+			Path peerTslCertPath = Paths.get(Thread.currentThread().getContextClassLoader().getResource(conf.getProperty(org+"."+peer+"."+"tsl.cert")).toURI());
+			Properties peerProps = new Properties();
+			peerProps.setProperty("pemFile", peerTslCertPath.toString());
+			peerProps.setProperty("sslProvider", "openSSL");
+			peerProps.setProperty("negotiationType", "TLS");
+			return hfClient.newEventHub(conf.getProperty(org + "." + peer +".name"), conf.getProperty(org + "." + peer +".event.url"), peerProps);
 		} else {
 			//TODO: Add non TLS peers
 			return null;
