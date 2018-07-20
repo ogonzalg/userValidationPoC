@@ -9,6 +9,12 @@
 			"revisionTime": "2018-07-15T08:23:32Z"
 		},
 		{
+			"checksumSHA1": "n+ZKx3gMoBi4t0fN84vzz0r2uCM=",
+			"path": "github.com/hyperledger/fabric/common/attrmgr",
+			"revision": "41db6d4dee6d3fb56f619ee9261eaf0889dd1f17",
+			"revisionTime": "2018-07-10T02:52:23Z"
+		},
+		{
 			"checksumSHA1": "y8UGqcO/ZWyUDSrSy/ANg64vOvs=",
 			"path": "github.com/hyperledger/fabric/core/chaincode/lib/cid",
 			"revision": "b915efbd556a5bbbb484c204516852b8cdd7fe07",
@@ -26,6 +32,10 @@
 			"path": "github.com/pkg/errors",
 			"revision": "816c9085562cd7ee03e7f8188a1cfd942858cded",
 			"revisionTime": "2018-03-11T21:45:15Z"
+		},
+		{
+			"path": "hyperledger/fabric/common/attrmgr",
+			"revision": ""
 		}
 	],
 	"rootPath": "github.com/pepecar"
