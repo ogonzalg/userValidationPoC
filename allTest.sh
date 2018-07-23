@@ -2,6 +2,8 @@
 #
 ./cleanAll.sh
 ./configureNetwork.sh
-./mavenTests.sh
+./mavenChannelCreationTest.sh
+./mavenDeployInstantiateChainCodeTest.sh
+./mavenChainCodeInvocationTest.sh
 ./cleanAll.sh
 
